@@ -1,10 +1,19 @@
 use raylib::prelude::*;
 
-const SCREEN_WIDTH: i32 = 640;
-const SCREEN_HEIGHT: i32 = 480;
+const SCREEN_WIDTH: i32 = 800;
+const SCREEN_HEIGHT: i32 = 600;
+
 const BTN_WIDTH: f32 = 128.0;
 const BTN_HEIGHT: f32 = 64.0;
 const BTN_SPACING: f32 = 25.0;
+
+#[derive(Debug)]
+enum GameScreen {
+    Logo,
+    Title,
+    Gameplay,
+    Ending,
+}
 
 fn main() {
     let (mut rl, thread) = raylib::init()
@@ -36,74 +45,104 @@ fn main() {
     rl.set_target_fps(60);
 
     let mut should_close = false;
-    let mut should_change_scene_to_main = true;
+    let mut screen = GameScreen::Logo;
 
     while !rl.window_should_close() && !should_close {
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::WHITE);
 
-        // start btn
-        draw_btn(
-            &mut d,
-            &font,
-            &start_btn_rec,
-            "Start",
-            start,
-            &mut should_change_scene_to_main,
-        );
+        match screen {
+            GameScreen::Logo => {
+                d.draw_rectangle_rec(
+                    Rectangle {
+                        x: 0.0,
+                        y: 0.0,
+                        width: 150.0,
+                        height: 150.0,
+                    },
+                    Color::BLACK,
+                );
 
-        // exit btn
-        draw_btn(
-            &mut d,
-            &font,
-            &exit_btn_rec,
-            "Exit",
-            exit,
-            &mut should_close,
-        );
+                if d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+                    screen = GameScreen::Title;
+                }
+            }
+            GameScreen::Title => {
+                if draw_btn(&mut d, &font, &start_btn_rec, "Start") {
+                    screen = GameScreen::Gameplay;
+                }
+                if draw_btn(&mut d, &font, &exit_btn_rec, "Exit") {
+                    should_close = true;
+                }
+            }
+            GameScreen::Gameplay => {
+                d.draw_text_ex(
+                    &font,
+                    "Peak Gameplay!",
+                    Vector2 { x: 20.0, y: 20.0 },
+                    24.0,
+                    1.0,
+                    Color::BLACK,
+                );
+
+                if d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+                    screen = GameScreen::Ending;
+                }
+            }
+            GameScreen::Ending => {
+                d.draw_text_ex(
+                    &font,
+                    "Ended!",
+                    Vector2 { x: 20.0, y: 20.0 },
+                    24.0,
+                    1.0,
+                    Color::BLACK,
+                );
+
+                if d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+                    screen = GameScreen::Logo;
+                }
+            }
+        }
     }
 }
 
-fn start(c: &mut bool) {
-    println!("Start clicked");
-}
-
-fn exit(c: &mut bool) {
-    println!("Exit clicked");
-    *c = true;
-}
-
-fn draw_btn<T, F: Fn(T)>(
-    d: &mut RaylibDrawHandle,
-    font: &Font,
-    rect: &Rectangle,
-    text: &str,
-    callback: F,
-    var: T,
-) {
+/// Draws a button and returns `true` if it was clicked.
+fn draw_btn(d: &mut RaylibDrawHandle, font: &Font, rect: &Rectangle, text: &str) -> bool {
     let mouse_pos = d.get_mouse_position();
     let is_hovered = rect.check_collision_point_rec(mouse_pos);
 
+    let text_size = font.measure_text(text, 24.0, 1.0);
+    let new_width = text_size.x + 25.0;
+    let final_width = new_width.max(rect.width);
+
+    // Adjust x to keep the button centered
+    let adjusted_x = rect.x - (final_width - rect.width) / 2.0;
+
+    let adjusted_rect = Rectangle {
+        x: adjusted_x,
+        y: rect.y,
+        width: final_width,
+        height: rect.height,
+    };
+
     d.draw_rectangle_lines_ex(
-        rect,
+        adjusted_rect,
         1.5,
         if is_hovered { Color::RED } else { Color::BLACK },
     );
 
-    let text_size = font.measure_text(text, 24.0, 1.0);
     d.draw_text_ex(
         font,
         text,
         Vector2 {
-            x: rect.x + (rect.width - text_size.x) / 2.0,
-            y: rect.y + (rect.height - text_size.y) / 2.0,
+            x: adjusted_rect.x + (adjusted_rect.width - text_size.x) / 2.0,
+            y: adjusted_rect.y + (adjusted_rect.height - text_size.y) / 2.0,
         },
         24.0,
         1.0,
         Color::BLACK,
     );
 
-    if is_hovered && d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-        callback(var);
-    }
+    is_hovered && d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
 }
