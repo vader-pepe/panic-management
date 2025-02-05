@@ -1,4 +1,6 @@
 use raylib::prelude::*;
+mod scene_manager;
+use scene_manager::{Scene, SceneManager};
 
 const SCREEN_WIDTH: i32 = 800;
 const SCREEN_HEIGHT: i32 = 600;
@@ -6,14 +8,6 @@ const SCREEN_HEIGHT: i32 = 600;
 const BTN_WIDTH: f32 = 128.0;
 const BTN_HEIGHT: f32 = 64.0;
 const BTN_SPACING: f32 = 25.0;
-
-#[derive(Debug)]
-enum GameScreen {
-    Logo,
-    Title,
-    Gameplay,
-    Ending,
-}
 
 fn main() {
     let (mut rl, thread) = raylib::init()
@@ -45,65 +39,87 @@ fn main() {
     rl.set_target_fps(60);
 
     let mut should_close = false;
-    let mut screen = GameScreen::Logo;
+    //let mut screen = GameScreen::Logo;
+    let logo_rec: Rectangle = Rectangle {
+        x: (SCREEN_WIDTH as f32 - 200.0) / 2.0,  // Center horizontally
+        y: (SCREEN_HEIGHT as f32 - 200.0) / 2.0, // Center vertically
+        width: 200.0,
+        height: 200.0,
+    };
 
+    let mut scene_manager = SceneManager::new();
+    scene_manager.init();
     while !rl.window_should_close() && !should_close {
+        let delta_time = rl.get_frame_time();
+        // Update logic
+        scene_manager.update(delta_time);
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::WHITE);
 
-        match screen {
-            GameScreen::Logo => {
-                d.draw_rectangle_rec(
-                    Rectangle {
-                        x: 0.0,
-                        y: 0.0,
-                        width: 150.0,
-                        height: 150.0,
-                    },
-                    Color::BLACK,
-                );
+        // Draw scene
+        scene_manager.draw(&mut d);
 
-                if d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-                    screen = GameScreen::Title;
-                }
-            }
-            GameScreen::Title => {
-                if draw_btn(&mut d, &font, &start_btn_rec, "Start") {
-                    screen = GameScreen::Gameplay;
-                }
-                if draw_btn(&mut d, &font, &exit_btn_rec, "Exit") {
-                    should_close = true;
-                }
-            }
-            GameScreen::Gameplay => {
-                d.draw_text_ex(
-                    &font,
-                    "Peak Gameplay!",
-                    Vector2 { x: 20.0, y: 20.0 },
-                    24.0,
-                    1.0,
-                    Color::BLACK,
-                );
-
-                if d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-                    screen = GameScreen::Ending;
-                }
-            }
-            GameScreen::Ending => {
-                d.draw_text_ex(
-                    &font,
-                    "Ended!",
-                    Vector2 { x: 20.0, y: 20.0 },
-                    24.0,
-                    1.0,
-                    Color::BLACK,
-                );
-
-                if d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-                    screen = GameScreen::Logo;
-                }
-            }
+        // Scene switch example
+        if d.is_key_pressed(KeyboardKey::KEY_ENTER) {
+            scene_manager.push(scene_manager::SceneID::MainMenu);
         }
+
+        //match screen {
+        //    GameScreen::Logo => {
+        //        d.draw_rectangle_lines_ex(logo_rec, 1.25, Color::BLACK);
+        //        d.draw_text_ex(
+        //            &font,
+        //            "Fancy Logo",
+        //            Vector2 {
+        //                x: logo_rec.x + 20.0,
+        //                y: logo_rec.y + 20.0,
+        //            },
+        //            24.0,
+        //            1.0,
+        //            Color::BLACK,
+        //        );
+        //
+        //        if d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+        //            screen = GameScreen::Title;
+        //        }
+        //    }
+        //    GameScreen::Title => {
+        //        if draw_btn(&mut d, &font, &start_btn_rec, "Start") {
+        //            screen = GameScreen::Gameplay;
+        //        }
+        //        if draw_btn(&mut d, &font, &exit_btn_rec, "Exit") {
+        //            should_close = true;
+        //        }
+        //    }
+        //    GameScreen::Gameplay => {
+        //        d.draw_text_ex(
+        //            &font,
+        //            "Peak Gameplay!",
+        //            Vector2 { x: 20.0, y: 20.0 },
+        //            24.0,
+        //            1.0,
+        //            Color::BLACK,
+        //        );
+        //
+        //        if d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+        //            screen = GameScreen::Ending;
+        //        }
+        //    }
+        //    GameScreen::Ending => {
+        //        d.draw_text_ex(
+        //            &font,
+        //            "Ended!",
+        //            Vector2 { x: 20.0, y: 20.0 },
+        //            24.0,
+        //            1.0,
+        //            Color::BLACK,
+        //        );
+        //
+        //        if d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+        //            screen = GameScreen::Logo;
+        //        }
+        //    }
+        //}
     }
 }
 
