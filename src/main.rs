@@ -43,8 +43,6 @@ fn main() {
         height: BTN_HEIGHT,
     };
 
-    rl.set_target_fps(60);
-
     let mut should_close = false;
     let logo_rec: Rectangle = Rectangle {
         x: (SCREEN_WIDTH as f32 - 200.0) / 2.0,  // Center horizontally
@@ -52,29 +50,44 @@ fn main() {
         width: 200.0,
         height: 200.0,
     };
-    let pause_btn = Button {
+    let mut pause_btn = Button {
         rect: Rectangle {
-            x: 20.0,
-            y: 20.0 + 25.0,
+            x: (SCREEN_WIDTH - (BTN_WIDTH as i32) - 20) as f32,
+            y: 25.0,
             height: BTN_HEIGHT,
             width: BTN_WIDTH,
         },
         text: "Pause",
+        visible: false,
     };
-    let resume_btn = Button {
+    let mut resume_btn = Button {
         rect: Rectangle { ..pause_btn.rect },
         text: "Resume",
+        visible: false,
     };
-    let end_btn = Button {
+    let mut end_btn = Button {
         rect: Rectangle {
-            y: pause_btn.rect.y + 125.0,
+            y: pause_btn.rect.y + 75.0,
             ..pause_btn.rect
         },
         text: "End",
+        visible: false,
+    };
+    let mut exit_btn = Button {
+        rect: exit_btn_rec,
+        text: "Exit",
+        visible: false,
+    };
+    let mut start_btn = Button {
+        rect: start_btn_rec,
+        text: "Start",
+        visible: false,
     };
 
     let mut screen = GameScreen::Logo;
+    let mut peasants_movespeed = SCREEN_WIDTH as f32;
 
+    rl.set_target_fps(60);
     while !rl.window_should_close() && !should_close {
         // WARNING: if you want an immutable reference to RaylibHandle,
         // please please do it before this warning line
@@ -101,40 +114,64 @@ fn main() {
                 }
             }
             GameScreen::MainMenu => {
-                let start_btn = Button {
-                    rect: start_btn_rec,
-                    text: "Start",
-                };
                 start_btn.draw(&mut d, &font);
                 if start_btn.is_clicked(&mut d) {
                     screen = GameScreen::Gameplay;
                 }
-                let exit_btn = Button {
-                    rect: exit_btn_rec,
-                    text: "Exit",
-                };
                 exit_btn.draw(&mut d, &font);
                 if exit_btn.is_clicked(&mut d) {
                     should_close = true;
                 }
             }
             GameScreen::Gameplay => {
-                d.draw_text_ex(
+                // WARNING: only updates things here!
+                // unless it's not gameplay related!
+                peasants_movespeed -= 1.0;
+                d.draw_rectangle_lines_ex(
+                    Rectangle {
+                        x: 20.0,
+                        y: 20.0,
+                        height: 150.0,
+                        width: 25.0,
+                    },
+                    1.25,
+                    Color::BLACK,
+                );
+                d.draw_rectangle_lines_ex(
+                    Rectangle {
+                        x: 20.0,
+                        y: (SCREEN_HEIGHT - 150 - 20) as f32,
+                        height: 150.0,
+                        width: 25.0,
+                    },
+                    1.25,
+                    Color::BLACK,
+                );
+                d.draw_circle_lines(peasants_movespeed as i32, 150, 25.0, Color::BLACK);
+                let text_size = font.measure_text("Peak Gameplay!", 24.0, 1.0);
+                let pos = Vector2 {
+                    x: 25.0,
+                    y: (SCREEN_HEIGHT / 2) as f32,
+                };
+                let origin = Vector2 {
+                    x: text_size.x / 2.0,
+                    y: text_size.y / 2.0,
+                };
+                let rotation = 90.0;
+                d.draw_text_pro(
                     &font,
                     "Peak Gameplay!",
-                    Vector2 { x: 20.0, y: 20.0 },
+                    pos,
+                    origin,
+                    rotation,
                     24.0,
                     1.0,
                     Color::BLACK,
                 );
                 pause_btn.draw(&mut d, &font);
-                end_btn.draw(&mut d, &font);
                 if pause_btn.is_clicked(&mut d) {
                     println!("Paused!");
-                }
-
-                if end_btn.is_clicked(&mut d) {
-                    screen = GameScreen::Ending;
+                    screen = GameScreen::PauseMenu;
                 }
             }
             GameScreen::Ending => {
@@ -150,7 +187,21 @@ fn main() {
                     screen = GameScreen::Logo;
                 }
             }
-            GameScreen::PauseMenu => todo!(),
+            GameScreen::PauseMenu => {
+                // Darken the gameplay background
+                d.draw_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Color::new(0, 0, 0, 180));
+
+                resume_btn.draw(&mut d, &font);
+                end_btn.draw(&mut d, &font);
+                if end_btn.is_clicked(&mut d) {
+                    screen = GameScreen::Ending;
+                }
+
+                // Handle button clicks
+                if resume_btn.is_clicked(&mut d) || d.is_key_pressed(KeyboardKey::KEY_ESCAPE) {
+                    screen = GameScreen::Gameplay;
+                }
+            }
         }
     }
 }
@@ -158,41 +209,45 @@ fn main() {
 struct Button<'a> {
     rect: Rectangle,
     text: &'a str,
+    visible: bool,
 }
 
 impl<'a> Button<'a> {
     /// Draws the button.
-    fn draw(&self, d: &mut RaylibDrawHandle, font: &Font) {
-        let mouse_pos = d.get_mouse_position();
-        let is_hovered = self.rect.check_collision_point_rec(mouse_pos);
-        let text_size = font.measure_text(self.text, 24.0, 1.0);
-        let new_width = text_size.x + 25.0;
-        let final_width = new_width.max(self.rect.width);
-        // Adjust x to keep the button centered.
-        let adjusted_x = self.rect.x - (final_width - self.rect.width) / 2.0;
-        let adjusted_rect = Rectangle {
-            x: adjusted_x,
-            y: self.rect.y,
-            width: final_width,
-            height: self.rect.height,
-        };
+    fn draw(&mut self, d: &mut RaylibDrawHandle, font: &Font) {
+        self.visible = true;
+        if self.visible {
+            let mouse_pos = d.get_mouse_position();
+            let is_hovered = self.rect.check_collision_point_rec(mouse_pos);
+            let text_size = font.measure_text(self.text, 24.0, 1.0);
+            let new_width = text_size.x + 25.0;
+            let final_width = new_width.max(self.rect.width);
+            // Adjust x to keep the button centered.
+            let adjusted_x = self.rect.x - (final_width - self.rect.width) / 2.0;
+            let adjusted_rect = Rectangle {
+                x: adjusted_x,
+                y: self.rect.y,
+                width: final_width,
+                height: self.rect.height,
+            };
 
-        d.draw_rectangle_lines_ex(
-            adjusted_rect,
-            1.5,
-            if is_hovered { Color::RED } else { Color::BLACK },
-        );
-        d.draw_text_ex(
-            font,
-            self.text,
-            Vector2 {
-                x: adjusted_rect.x + (adjusted_rect.width - text_size.x) / 2.0,
-                y: adjusted_rect.y + (adjusted_rect.height - text_size.y) / 2.0,
-            },
-            24.0,
-            1.0,
-            Color::BLACK,
-        );
+            d.draw_rectangle_lines_ex(
+                adjusted_rect,
+                1.5,
+                if is_hovered { Color::RED } else { Color::BLACK },
+            );
+            d.draw_text_ex(
+                font,
+                self.text,
+                Vector2 {
+                    x: adjusted_rect.x + (adjusted_rect.width - text_size.x) / 2.0,
+                    y: adjusted_rect.y + (adjusted_rect.height - text_size.y) / 2.0,
+                },
+                24.0,
+                1.0,
+                Color::BLACK,
+            );
+        }
     }
     /// Returns `true` if the button was clicked.
     fn is_clicked(&self, d: &mut RaylibDrawHandle) -> bool {
