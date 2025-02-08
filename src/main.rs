@@ -85,7 +85,9 @@ fn main() {
     };
 
     let mut screen = GameScreen::Logo;
-    let mut peasants_movespeed = SCREEN_WIDTH as f32;
+    let mut velocity: f32 = 1.0;
+    let mut peasant_steps = SCREEN_WIDTH as f32;
+    let mut last_valid_peasant_steps = SCREEN_WIDTH as f32;
 
     rl.set_target_fps(60);
     while !rl.window_should_close() && !should_close {
@@ -115,18 +117,19 @@ fn main() {
             }
             GameScreen::MainMenu => {
                 start_btn.draw(&mut d, &font);
-                if start_btn.is_clicked(&mut d) {
+                start_btn.handle_click(&mut d, || {
                     screen = GameScreen::Gameplay;
-                }
+                });
                 exit_btn.draw(&mut d, &font);
-                if exit_btn.is_clicked(&mut d) {
+                exit_btn.handle_click(&mut d, || {
                     should_close = true;
-                }
+                });
             }
             GameScreen::Gameplay => {
                 // WARNING: only updates things here!
                 // unless it's not gameplay related!
-                peasants_movespeed -= 1.0;
+                last_valid_peasant_steps -= velocity * 1.0;
+                peasant_steps -= velocity * 1.0;
                 d.draw_rectangle_lines_ex(
                     Rectangle {
                         x: 20.0,
@@ -147,7 +150,25 @@ fn main() {
                     1.25,
                     Color::BLACK,
                 );
-                d.draw_circle_lines(peasants_movespeed as i32, 150, 25.0, Color::BLACK);
+                d.draw_circle_lines(peasant_steps as i32, 150, 25.0, Color::BLACK);
+                let rec1 = Rectangle {
+                    x: 20.0,
+                    y: 20.0,
+                    height: 150.0,
+                    width: 25.0,
+                };
+                if rec1.check_collision_circle_rec(
+                    Vector2 {
+                        x: peasant_steps,
+                        y: 150.0,
+                    },
+                    25.0,
+                ) {
+                    peasant_steps = last_valid_peasant_steps;
+                    velocity = 0.0;
+                } else {
+                    println!("not collided");
+                }
                 let text_size = font.measure_text("Peak Gameplay!", 24.0, 1.0);
                 let pos = Vector2 {
                     x: 25.0,
@@ -169,10 +190,14 @@ fn main() {
                     Color::BLACK,
                 );
                 pause_btn.draw(&mut d, &font);
-                if pause_btn.is_clicked(&mut d) {
+                pause_btn.handle_click(&mut d, || {
                     println!("Paused!");
                     screen = GameScreen::PauseMenu;
-                }
+                });
+                end_btn.draw(&mut d, &font);
+                end_btn.handle_click(&mut d, || {
+                    screen = GameScreen::Ending;
+                });
             }
             GameScreen::Ending => {
                 d.draw_text_ex(
@@ -192,15 +217,23 @@ fn main() {
                 d.draw_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Color::new(0, 0, 0, 180));
 
                 resume_btn.draw(&mut d, &font);
-                end_btn.draw(&mut d, &font);
-                if end_btn.is_clicked(&mut d) {
-                    screen = GameScreen::Ending;
-                }
-
-                // Handle button clicks
-                if resume_btn.is_clicked(&mut d) || d.is_key_pressed(KeyboardKey::KEY_ESCAPE) {
+                resume_btn.handle_click(&mut d, || {
                     screen = GameScreen::Gameplay;
-                }
+                });
+                // probably should move? idk
+                exit_btn.rect = Rectangle {
+                    x: end_btn.rect.x,
+                    y: end_btn.rect.y + 75.0,
+                    ..exit_btn.rect
+                };
+                exit_btn.draw(&mut d, &font);
+                exit_btn.handle_click(&mut d, || {
+                    should_close = true;
+                });
+                end_btn.draw(&mut d, &font);
+                end_btn.handle_click(&mut d, || {
+                    screen = GameScreen::Ending;
+                });
             }
         }
     }
@@ -249,10 +282,16 @@ impl<'a> Button<'a> {
             );
         }
     }
-    /// Returns `true` if the button was clicked.
-    fn is_clicked(&self, d: &mut RaylibDrawHandle) -> bool {
+    /// Executes the provided callback if the button is clicked.
+    fn handle_click<F>(&self, d: &mut RaylibDrawHandle, callback: F)
+    where
+        F: FnOnce(),
+    {
         let mouse_pos = d.get_mouse_position();
-        self.rect.check_collision_point_rec(mouse_pos)
+        if self.rect.check_collision_point_rec(mouse_pos)
             && d.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        {
+            callback();
+        }
     }
 }
