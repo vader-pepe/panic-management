@@ -1,3 +1,4 @@
+use panic_management::InitPhysics;
 use raylib::prelude::*;
 
 const SCREEN_WIDTH: i32 = 800;
@@ -17,6 +18,9 @@ enum GameScreen {
 }
 
 fn main() {
+    unsafe {
+        InitPhysics();
+    }
     let (mut rl, thread) = raylib::init()
         .size(SCREEN_WIDTH, SCREEN_HEIGHT)
         .title("Panic Management")
