@@ -1,4 +1,8 @@
-use panic_management::InitPhysics;
+use wrapped2d::{
+    b2::{BodyDef, BodyType, FixtureDef, PolygonShape, Vec2, World},
+    user_data::NoUserData,
+};
+
 use raylib::prelude::*;
 
 const SCREEN_WIDTH: i32 = 800;
@@ -7,6 +11,31 @@ const SCREEN_HEIGHT: i32 = 600;
 const BTN_WIDTH: f32 = 128.0;
 const BTN_HEIGHT: f32 = 64.0;
 const BTN_SPACING: f32 = 25.0;
+
+//const PPM: f32 = 50.0; // pixels per meter
+
+/// Converts a Box2D world position (meters) to screen coordinates (pixels).
+//fn world_to_screen(pos: Vec2, screen_height: f32) -> (i32, i32) {
+//    let x = (pos.x * PPM) as i32;
+//    // If your screen coordinate system has y increasing downward,
+//    // you may need to flip the y axis:
+//    let y = (screen_height - (-pos.y) * PPM) as i32;
+//    (x, y)
+//}
+// JANGAN PERCAYA CHATGPT
+
+/// Converts screen coordinates (pixels) to Box2D world coordinates (meters).
+/// `screen_height` is the height of your window in pixels.
+//fn screen_to_world(screen_x: i32, screen_y: i32, screen_height: f32) -> Vec2 {
+//    let world_x = screen_x as f32 / PPM;
+//    // Invert the y coordinate if your screen origin is top-left
+//    let world_y = (screen_height - (-screen_y) as f32) / PPM;
+//    Vec2 {
+//        x: world_x,
+//        y: world_y,
+//    }
+//}
+// JANGAN PERCAYA CHATGPT
 
 #[derive(Debug)]
 enum GameScreen {
@@ -18,9 +47,6 @@ enum GameScreen {
 }
 
 fn main() {
-    unsafe {
-        InitPhysics();
-    }
     let (mut rl, thread) = raylib::init()
         .size(SCREEN_WIDTH, SCREEN_HEIGHT)
         .title("Panic Management")
@@ -92,11 +118,19 @@ fn main() {
     let mut velocity: f32 = 1.0;
     let mut peasant_steps = SCREEN_WIDTH as f32;
     let mut last_valid_peasant_steps = SCREEN_WIDTH as f32;
+    let gravity = Vec2 { x: 0., y: 10. };
+    let mut world = World::<NoUserData>::new(&gravity);
+    let time_step = 1.0 / 60.0;
+    let velocity_iterations = 4;
+    let position_iterations = 2;
 
     rl.set_target_fps(60);
+
     while !rl.window_should_close() && !should_close {
-        // WARNING: if you want an immutable reference to RaylibHandle,
-        // please please do it before this warning line
+        let mouse_pos = rl.get_mouse_position();
+
+        world.step(time_step, velocity_iterations, position_iterations);
+
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::WHITE);
 
@@ -171,7 +205,7 @@ fn main() {
                     peasant_steps = last_valid_peasant_steps;
                     velocity = 0.0;
                 } else {
-                    println!("not collided");
+                    //println!("not collided");
                 }
                 let text_size = font.measure_text("Peak Gameplay!", 24.0, 1.0);
                 let pos = Vector2 {
@@ -202,6 +236,56 @@ fn main() {
                 end_btn.handle_click(&mut d, || {
                     screen = GameScreen::Ending;
                 });
+
+                // testing Box2D
+                if d.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT) {
+                    println!("clicked");
+                    let v = Vec2 {
+                        x: mouse_pos.x,
+                        y: mouse_pos.y,
+                    };
+
+                    let body_def = BodyDef {
+                        body_type: BodyType::Dynamic,
+                        position: v,
+                        ..BodyDef::new()
+                    };
+                    let handle = world.create_body(&body_def);
+
+                    let mut body = world.body_mut(handle);
+                    let box_w = 15.0 / 2.0;
+                    let box_h = 15.0 / 2.0;
+
+                    let shape = PolygonShape::new_box(box_w, box_h);
+                    let mut fixture = FixtureDef::new();
+                    fixture.density = 3.0;
+                    fixture.friction = 0.3;
+                    fixture.restitution = 0.5;
+
+                    body.set_linear_velocity(&Vec2 { x: 0.0, y: 25.0 });
+                    body.set_angular_velocity(100.0);
+                    body.create_fixture(&shape, &mut fixture);
+                }
+                for (body_handle, _meta) in world.bodies() {
+                    let body = world.body(body_handle);
+                    let pos = body.position();
+                    let a = body.angle() * 2.0;
+
+                    d.draw_rectangle_pro(
+                        Rectangle {
+                            x: pos.x,
+                            y: pos.y,
+                            height: 15.0,
+                            width: 15.0,
+                        },
+                        Vector2 {
+                            x: 15.0 / 2.0,
+                            y: 15.0 / 2.0,
+                        },
+                        -a,
+                        Color::BLACK,
+                    );
+                }
             }
             GameScreen::Ending => {
                 d.draw_text_ex(

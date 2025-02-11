@@ -5,7 +5,5 @@ edition = "2021"
 
 [dependencies]
 raylib = { version = "5.0" }
-
-[build-dependencies]
-bindgen = "0.71.1"
-cc = "1.2.13"
+serde = "1.0.217"
+wrapped2d = "0.4.2"
