@@ -95,6 +95,14 @@ fn main() {
         visible: false,
     };
 
+    let mut creature_1_rect = Rectangle {
+        x: (SCREEN_WIDTH / 2 - 15) as f32
+            + ((0.0 as f32) * 0.5 * TILE_WIDTH + (0.0 as f32) * -0.5 * TILE_WIDTH),
+        y: 0.0,
+        width: 32.0,
+        height: 32.0,
+    };
+
     let mut screen = GameScreen::Logo;
 
     rl.set_target_fps(60);
@@ -135,6 +143,37 @@ fn main() {
             GameScreen::Gameplay => {
                 // WARNING: only updates things here!
                 // unless it's not gameplay related!
+                if d.is_key_down(KeyboardKey::KEY_LEFT) && d.is_key_down(KeyboardKey::KEY_DOWN) {
+                    println!("Diagonal left down");
+                }
+
+                if d.is_key_down(KeyboardKey::KEY_RIGHT) && d.is_key_down(KeyboardKey::KEY_DOWN) {
+                    println!("Diagonal right down");
+                }
+
+                if d.is_key_down(KeyboardKey::KEY_RIGHT) && d.is_key_down(KeyboardKey::KEY_UP) {
+                    println!("Diagonal right up");
+                }
+
+                if d.is_key_down(KeyboardKey::KEY_LEFT) && d.is_key_down(KeyboardKey::KEY_UP) {
+                    println!("Diagonal left up");
+                }
+
+                if d.is_key_down(KeyboardKey::KEY_UP) {
+                    creature_1_rect.y -= 32.0;
+                }
+
+                if d.is_key_down(KeyboardKey::KEY_DOWN) {
+                    creature_1_rect.y += 32.0;
+                }
+
+                if d.is_key_down(KeyboardKey::KEY_LEFT) {
+                    creature_1_rect.x -= 32.0;
+                }
+
+                if d.is_key_down(KeyboardKey::KEY_RIGHT) {
+                    creature_1_rect.x += 32.0;
+                }
 
                 // loop over X axis
                 for x in 0..35 {
@@ -175,11 +214,12 @@ fn main() {
                         height: 64.0,
                     },
                     Rectangle {
-                        x: (SCREEN_WIDTH / 2 - 15) as f32
-                            + ((0.0 as f32) * 0.5 * TILE_WIDTH + (0.0 as f32) * -0.5 * TILE_WIDTH),
-                        y: 0.0,
-                        width: 32.0,
-                        height: 32.0,
+                        //x: (SCREEN_WIDTH / 2 - 15) as f32
+                        //    + ((creature_1_rect.x as f32) * 0.5 * TILE_WIDTH
+                        //        + (creature_1_rect.y as f32) * -0.5 * TILE_WIDTH),
+                        //y: ((creature_1_rect.x as f32) * 0.25 * TILE_HEIGHT
+                        //    + (creature_1_rect.y as f32) * 0.25 * TILE_HEIGHT),
+                        ..creature_1_rect
                     },
                     Vector2 { x: 0.0, y: 0.0 },
                     0.0,
