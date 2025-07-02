@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Menu Template</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+  <!-- Main Menu -->
+  <div id="main-menu" class="hidden flex-col items-center justify-center min-h-screen space-y-6">
+    <h1 class="text-4xl font-bold">Main Menu</h1>
+    <button class="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700">Start Game</button>
+    <button class="px-6 py-2 bg-green-600 rounded hover:bg-green-700">Options</button>
+    <button class="px-6 py-2 bg-red-600 rounded hover:bg-red-700">Exit</button>
+  </div>
+
+  <!-- Pause Menu (Hidden by default) -->
+  <div id="pause-menu" class="hidden fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center space-y-6">
+    <h2 class="text-3xl font-semibold">Paused</h2>
+    <button class="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700">Resume</button>
+    <button class="px-6 py-2 bg-yellow-600 rounded hover:bg-yellow-700">Restart</button>
+    <button class="px-6 py-2 bg-red-600 rounded hover:bg-red-700">Quit to Menu</button>
+  </div>
+
+  <!-- Options Menu (Hidden by default) -->
+  <div id="options-menu" class="hidden fixed inset-0 bg-gray-800 bg-opacity-95 flex flex-col items-center justify-center space-y-6">
+    <h2 class="text-3xl font-semibold">Options</h2>
+    <div class="space-y-4">
+      <label class="flex items-center space-x-4">
+        <span>Volume</span>
+        <input type="range" min="0" max="100" class="w-64">
+      </label>
+      <label class="flex items-center space-x-4">
+        <span>Graphics</span>
+        <select class="bg-gray-700 text-white px-2 py-1 rounded">
+          <option>Low</option>
+          <option>Medium</option>
+          <option>High</option>
+        </select>
+      </label>
+    </div>
+    <button class="mt-6 px-6 py-2 bg-blue-600 rounded hover:bg-blue-700">Back</button>
+  </div>
+
+  <!-- Game Over Menu (Hidden by default) -->
+  <div id="gameover-menu" class="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center space-y-6">
+    <h2 class="text-4xl font-bold text-red-500">Game Over</h2>
+    <button class="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700">Retry</button>
+    <button class="px-6 py-2 bg-gray-600 rounded hover:bg-gray-700">Main Menu</button>
+  </div>
+</body>
+</html>

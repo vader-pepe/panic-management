@@ -18,7 +18,6 @@ enum GameScreen {
     PauseMenu,
     Ending,
 }
-
 fn main() {
     let (mut rl, thread) = raylib::init()
         .size(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -34,7 +33,7 @@ fn main() {
         .expect("Failed to load image");
 
     let creature_1 = rl
-        .load_texture(&thread, "critters/wolf/wolf-run.png")
+        .load_texture(&thread, "character/Sprites/IDLE/idle_down.png")
         .expect("Failed to load image");
 
     let center_x = (SCREEN_WIDTH as f32 - BTN_WIDTH) / 2.0;
@@ -96,8 +95,7 @@ fn main() {
     };
 
     let mut creature_1_rect = Rectangle {
-        x: (SCREEN_WIDTH / 2 - 15) as f32
-            + ((0.0 as f32) * 0.5 * TILE_WIDTH + (0.0 as f32) * -0.5 * TILE_WIDTH),
+        x: 0.0,
         y: 0.0,
         width: 32.0,
         height: 32.0,
@@ -106,10 +104,15 @@ fn main() {
     let mut screen = GameScreen::Logo;
 
     rl.set_target_fps(60);
+    let mut dt: f32;
 
     while !rl.window_should_close() && !should_close {
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::WHITE);
+        dt = d.get_frame_time();
+
+        let x = d.get_mouse_position();
+        print!("{:#?}", x);
 
         match screen {
             GameScreen::Logo => {
@@ -160,25 +163,50 @@ fn main() {
                 }
 
                 if d.is_key_down(KeyboardKey::KEY_UP) {
-                    creature_1_rect.y -= 32.0;
+                    creature_1_rect.y -= 32.0 * dt;
                 }
 
                 if d.is_key_down(KeyboardKey::KEY_DOWN) {
-                    creature_1_rect.y += 32.0;
+                    creature_1_rect.y += 32.0 * dt;
                 }
 
                 if d.is_key_down(KeyboardKey::KEY_LEFT) {
-                    creature_1_rect.x -= 32.0;
+                    creature_1_rect.x -= 32.0 * dt;
                 }
 
                 if d.is_key_down(KeyboardKey::KEY_RIGHT) {
-                    creature_1_rect.x += 32.0;
+                    creature_1_rect.x += 32.0 * dt;
                 }
 
                 // loop over X axis
                 for x in 0..35 {
                     // loop over Y axis
                     for y in 0..35 {
+                        if x == 0 && y == 0 {
+                            d.draw_texture_pro(
+                                &tiles_texture,
+                                Rectangle {
+                                    x: 0.0,
+                                    y: 2.0,
+                                    width: TILE_WIDTH,
+                                    height: TILE_HEIGHT,
+                                },
+                                Rectangle {
+                                    // use here
+                                    x: (SCREEN_WIDTH / 2 - 15) as f32
+                                        + ((x as f32) * 0.5 * TILE_WIDTH
+                                            + (y as f32) * -0.5 * TILE_WIDTH),
+                                    y: ((x as f32) * 0.25 * TILE_HEIGHT
+                                        + (y as f32) * 0.25 * TILE_HEIGHT),
+                                    width: TILE_WIDTH,
+                                    height: TILE_HEIGHT,
+                                },
+                                Vector2 { x: 0.0, y: 0.0 },
+                                0.0,
+                                Color::WHITE,
+                            );
+                            continue;
+                        }
                         d.draw_texture_pro(
                             &tiles_texture,
                             Rectangle {
@@ -208,19 +236,12 @@ fn main() {
                 d.draw_texture_pro(
                     &creature_1,
                     Rectangle {
-                        x: 0.0,
-                        y: 0.0,
-                        width: 64.0,
-                        height: 64.0,
+                        x: 36.0,
+                        y: 24.0,
+                        width: 32.0,
+                        height: 32.0,
                     },
-                    Rectangle {
-                        //x: (SCREEN_WIDTH / 2 - 15) as f32
-                        //    + ((creature_1_rect.x as f32) * 0.5 * TILE_WIDTH
-                        //        + (creature_1_rect.y as f32) * -0.5 * TILE_WIDTH),
-                        //y: ((creature_1_rect.x as f32) * 0.25 * TILE_HEIGHT
-                        //    + (creature_1_rect.y as f32) * 0.25 * TILE_HEIGHT),
-                        ..creature_1_rect
-                    },
+                    Rectangle { ..creature_1_rect },
                     Vector2 { x: 0.0, y: 0.0 },
                     0.0,
                     Color::WHITE,
