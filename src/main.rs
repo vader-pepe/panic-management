@@ -106,13 +106,15 @@ fn main() {
     rl.set_target_fps(60);
     let mut dt: f32;
 
+    let determinant = 0.5 * TILE_WIDTH * TILE_HEIGHT;
+    let inv_det = 1.0 / determinant;
+
     while !rl.window_should_close() && !should_close {
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::WHITE);
         dt = d.get_frame_time();
 
-        let x = d.get_mouse_position();
-        print!("{:#?}", x);
+        let mouse_pos = d.get_mouse_position();
 
         match screen {
             GameScreen::Logo => {
@@ -146,6 +148,7 @@ fn main() {
             GameScreen::Gameplay => {
                 // WARNING: only updates things here!
                 // unless it's not gameplay related!
+
                 if d.is_key_down(KeyboardKey::KEY_LEFT) && d.is_key_down(KeyboardKey::KEY_DOWN) {
                     println!("Diagonal left down");
                 }
@@ -182,7 +185,14 @@ fn main() {
                 for x in 0..35 {
                     // loop over Y axis
                     for y in 0..35 {
-                        if x == 0 && y == 0 {
+                        // WARNING: START TRASH
+                        let gx = (0.25 * TILE_HEIGHT * (mouse_pos.x - x as f32)
+                            + 0.5 * TILE_WIDTH * (mouse_pos.y - y as f32))
+                            * inv_det;
+                        let gy = (-0.25 * TILE_HEIGHT * (mouse_pos.x - x as f32)
+                            + 0.5 * TILE_WIDTH * (mouse_pos.y - y as f32))
+                            * inv_det;
+                        if x == gx.floor() as i32 && y == gy.floor() as i32 {
                             d.draw_texture_pro(
                                 &tiles_texture,
                                 Rectangle {
@@ -193,9 +203,8 @@ fn main() {
                                 },
                                 Rectangle {
                                     // use here
-                                    x: (SCREEN_WIDTH / 2 - 15) as f32
-                                        + ((x as f32) * 0.5 * TILE_WIDTH
-                                            + (y as f32) * -0.5 * TILE_WIDTH),
+                                    x: ((x as f32) * 0.5 * TILE_WIDTH
+                                        + (y as f32) * -0.5 * TILE_WIDTH),
                                     y: ((x as f32) * 0.25 * TILE_HEIGHT
                                         + (y as f32) * 0.25 * TILE_HEIGHT),
                                     width: TILE_WIDTH,
@@ -207,6 +216,7 @@ fn main() {
                             );
                             continue;
                         }
+                        // WARNING: END TRASH
                         d.draw_texture_pro(
                             &tiles_texture,
                             Rectangle {
@@ -217,9 +227,7 @@ fn main() {
                             },
                             Rectangle {
                                 // use here
-                                x: (SCREEN_WIDTH / 2 - 15) as f32
-                                    + ((x as f32) * 0.5 * TILE_WIDTH
-                                        + (y as f32) * -0.5 * TILE_WIDTH),
+                                x: ((x as f32) * 0.5 * TILE_WIDTH + (y as f32) * -0.5 * TILE_WIDTH),
                                 y: ((x as f32) * 0.25 * TILE_HEIGHT
                                     + (y as f32) * 0.25 * TILE_HEIGHT),
                                 width: TILE_WIDTH,
