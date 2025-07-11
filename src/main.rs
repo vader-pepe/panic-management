@@ -179,15 +179,36 @@ fn main() {
                     creature_1_rect.x += 32.0 * dt * speed;
                 }
 
+                let (tile_x, tile_y) = screen_to_iso_tile(mouse_pos.x, mouse_pos.y);
+
                 // loop over X axis
                 for x in 0..30 {
                     // loop over Y axis
                     for y in 0..30 {
-                        // WARNING: START TRASH
-                        let u = mouse_pos.x;
-                        let v = mouse_pos.y;
-
-                        // WARNING: END TRASH
+                        if x == tile_x && y == tile_y {
+                            d.draw_texture_pro(
+                                &tiles_texture,
+                                Rectangle {
+                                    x: 0.0,
+                                    y: 2.0,
+                                    width: TILE_WIDTH,
+                                    height: TILE_HEIGHT,
+                                },
+                                Rectangle {
+                                    // use here
+                                    x: ((x as f32) * 0.5 * TILE_WIDTH
+                                        + (y as f32) * -0.5 * TILE_WIDTH),
+                                    y: ((x as f32) * 0.25 * TILE_HEIGHT
+                                        + (y as f32) * 0.25 * TILE_HEIGHT),
+                                    width: TILE_WIDTH,
+                                    height: TILE_HEIGHT,
+                                },
+                                Vector2 { x: 0.0, y: 0.0 },
+                                0.0,
+                                Color::WHITE,
+                            );
+                            continue;
+                        }
                         d.draw_texture_pro(
                             &tiles_texture,
                             Rectangle {
@@ -198,9 +219,7 @@ fn main() {
                             },
                             Rectangle {
                                 // use here
-                                x: ((x as f32) * 0.5 * TILE_WIDTH + (y as f32) * -0.5 * TILE_WIDTH)
-                                    - (TILE_WIDTH / 2.0)
-                                    + (SCREEN_WIDTH as f32 / 2.0),
+                                x: ((x as f32) * 0.5 * TILE_WIDTH + (y as f32) * -0.5 * TILE_WIDTH),
                                 y: ((x as f32) * 0.25 * TILE_HEIGHT
                                     + (y as f32) * 0.25 * TILE_HEIGHT),
                                 width: TILE_WIDTH,
@@ -282,6 +301,28 @@ struct Button<'a> {
     rect: Rectangle,
     text: &'a str,
     visible: bool,
+}
+
+fn screen_to_iso_tile(mx: f32, my: f32) -> (i32, i32) {
+    let tile_w = TILE_WIDTH;
+    let tile_h = TILE_HEIGHT;
+
+    let half_tile_w = tile_w * 0.5;
+    let quarter_tile_h = tile_h * 0.25;
+
+    let fx = (mx / half_tile_w + my / quarter_tile_h) / 2.0 - 1.0;
+    let fy = (my / quarter_tile_h - mx / half_tile_w) / 2.0;
+
+    let x = fx.round() as i32;
+    let y = fy.round() as i32;
+
+    (x, y)
+    //// Optional bounds check if you know your map dimensions
+    //if x >= 0 && y >= 0 && x < SCREEN_WIDTH && y < SCREEN_HEIGHT {
+    //    Some((x, y))
+    //} else {
+    //    None
+    //}
 }
 
 impl<'a> Button<'a> {
