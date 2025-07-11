@@ -1,7 +1,7 @@
 use raylib::prelude::*;
 
-const SCREEN_WIDTH: i32 = 800;
-const SCREEN_HEIGHT: i32 = 600;
+const SCREEN_WIDTH: i32 = 960;
+const SCREEN_HEIGHT: i32 = 960;
 
 const BTN_WIDTH: f32 = 128.0;
 const BTN_HEIGHT: f32 = 64.0;
@@ -105,9 +105,7 @@ fn main() {
 
     rl.set_target_fps(60);
     let mut dt: f32;
-
-    let determinant = 0.5 * TILE_WIDTH * TILE_HEIGHT;
-    let inv_det = 1.0 / determinant;
+    let speed = 5.0;
 
     while !rl.window_should_close() && !should_close {
         let mut d = rl.begin_drawing(&thread);
@@ -166,56 +164,29 @@ fn main() {
                 }
 
                 if d.is_key_down(KeyboardKey::KEY_UP) {
-                    creature_1_rect.y -= 32.0 * dt;
+                    creature_1_rect.y -= 32.0 * dt * speed;
                 }
 
                 if d.is_key_down(KeyboardKey::KEY_DOWN) {
-                    creature_1_rect.y += 32.0 * dt;
+                    creature_1_rect.y += 32.0 * dt * speed;
                 }
 
                 if d.is_key_down(KeyboardKey::KEY_LEFT) {
-                    creature_1_rect.x -= 32.0 * dt;
+                    creature_1_rect.x -= 32.0 * dt * speed;
                 }
 
                 if d.is_key_down(KeyboardKey::KEY_RIGHT) {
-                    creature_1_rect.x += 32.0 * dt;
+                    creature_1_rect.x += 32.0 * dt * speed;
                 }
 
                 // loop over X axis
-                for x in 0..35 {
+                for x in 0..30 {
                     // loop over Y axis
-                    for y in 0..35 {
+                    for y in 0..30 {
                         // WARNING: START TRASH
-                        let gx = (0.25 * TILE_HEIGHT * (mouse_pos.x - x as f32)
-                            + 0.5 * TILE_WIDTH * (mouse_pos.y - y as f32))
-                            * inv_det;
-                        let gy = (-0.25 * TILE_HEIGHT * (mouse_pos.x - x as f32)
-                            + 0.5 * TILE_WIDTH * (mouse_pos.y - y as f32))
-                            * inv_det;
-                        if x == gx.floor() as i32 && y == gy.floor() as i32 {
-                            d.draw_texture_pro(
-                                &tiles_texture,
-                                Rectangle {
-                                    x: 0.0,
-                                    y: 2.0,
-                                    width: TILE_WIDTH,
-                                    height: TILE_HEIGHT,
-                                },
-                                Rectangle {
-                                    // use here
-                                    x: ((x as f32) * 0.5 * TILE_WIDTH
-                                        + (y as f32) * -0.5 * TILE_WIDTH),
-                                    y: ((x as f32) * 0.25 * TILE_HEIGHT
-                                        + (y as f32) * 0.25 * TILE_HEIGHT),
-                                    width: TILE_WIDTH,
-                                    height: TILE_HEIGHT,
-                                },
-                                Vector2 { x: 0.0, y: 0.0 },
-                                0.0,
-                                Color::WHITE,
-                            );
-                            continue;
-                        }
+                        let u = mouse_pos.x;
+                        let v = mouse_pos.y;
+
                         // WARNING: END TRASH
                         d.draw_texture_pro(
                             &tiles_texture,
@@ -227,7 +198,9 @@ fn main() {
                             },
                             Rectangle {
                                 // use here
-                                x: ((x as f32) * 0.5 * TILE_WIDTH + (y as f32) * -0.5 * TILE_WIDTH),
+                                x: ((x as f32) * 0.5 * TILE_WIDTH + (y as f32) * -0.5 * TILE_WIDTH)
+                                    - (TILE_WIDTH / 2.0)
+                                    + (SCREEN_WIDTH as f32 / 2.0),
                                 y: ((x as f32) * 0.25 * TILE_HEIGHT
                                     + (y as f32) * 0.25 * TILE_HEIGHT),
                                 width: TILE_WIDTH,
