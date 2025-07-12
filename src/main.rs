@@ -197,7 +197,9 @@ fn main() {
                                 Rectangle {
                                     // use here
                                     x: ((x as f32) * 0.5 * TILE_WIDTH
-                                        + (y as f32) * -0.5 * TILE_WIDTH),
+                                        + (y as f32) * -0.5 * TILE_WIDTH)
+                                        - (TILE_WIDTH / 2.0)
+                                        + (SCREEN_WIDTH as f32 / 2.0),
                                     y: ((x as f32) * 0.25 * TILE_HEIGHT
                                         + (y as f32) * 0.25 * TILE_HEIGHT),
                                     width: TILE_WIDTH,
@@ -219,7 +221,9 @@ fn main() {
                             },
                             Rectangle {
                                 // use here
-                                x: ((x as f32) * 0.5 * TILE_WIDTH + (y as f32) * -0.5 * TILE_WIDTH),
+                                x: ((x as f32) * 0.5 * TILE_WIDTH + (y as f32) * -0.5 * TILE_WIDTH)
+                                    - (TILE_WIDTH / 2.0)
+                                    + (SCREEN_WIDTH as f32 / 2.0),
                                 y: ((x as f32) * 0.25 * TILE_HEIGHT
                                     + (y as f32) * 0.25 * TILE_HEIGHT),
                                 width: TILE_WIDTH,
@@ -309,6 +313,8 @@ fn screen_to_iso_tile(mx: f32, my: f32) -> (i32, i32) {
 
     let half_tile_w = tile_w * 0.5;
     let quarter_tile_h = tile_h * 0.25;
+
+    let mx = mx - (SCREEN_WIDTH as f32 / 2.0) + (tile_w / 2.0);
 
     let fx = (mx / half_tile_w + my / quarter_tile_h) / 2.0 - 1.0;
     let fy = (my / quarter_tile_h - mx / half_tile_w) / 2.0;
