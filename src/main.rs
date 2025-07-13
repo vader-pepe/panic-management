@@ -11,6 +11,65 @@ const TILE_WIDTH: f32 = 32.0;
 const TILE_HEIGHT: f32 = 32.0;
 
 #[derive(Debug)]
+struct Entity {
+    texture: Texture2D,
+    src: Rectangle,
+    dest: Rectangle,
+    position: (i32, i32), // Grid position
+}
+
+impl Entity {
+    fn new(texture: Texture2D, grid_x: i32, grid_y: i32) -> Self {
+        let (screen_x, screen_y) = iso_to_screen(grid_x, grid_y);
+
+        Entity {
+            texture,
+            src: Rectangle {
+                x: 36.0,
+                y: 24.0,
+                width: 32.0,
+                height: 32.0,
+            },
+            dest: Rectangle {
+                x: screen_x as f32,
+                y: screen_y as f32,
+                width: 32.0,
+                height: 32.0,
+            },
+            position: (grid_x, grid_y),
+        }
+    }
+
+    // draw creature
+    //d.draw_texture_pro(
+    //    &creature_1,
+    //    Rectangle {
+    //        x: 36.0,
+    //        y: 24.0,
+    //        width: 32.0,
+    //        height: 32.0,
+    //    },
+    //    Rectangle { ..creature_1_rect },
+    //    Vector2 { x: 0.0, y: 0.0 },
+    //    0.0,
+    //    Color::WHITE,
+    //);
+    fn draw(&self, d: &mut RaylibDrawHandle) {
+        d.draw_texture_pro(
+            &self.texture,
+            self.src,
+            self.dest,
+            Vector2 {
+                x: TILE_WIDTH / 2.0,
+                y: TILE_HEIGHT / 2.0,
+            },
+            0.0,
+            Color::WHITE,
+        );
+    }
+}
+
+#[derive(Debug)]
 enum GameScreen {
     Logo,
     MainMenu,
@@ -101,6 +160,8 @@ fn main() {
         height: 32.0,
     };
 
+    let player = Entity::new(creature_1, 1, 1);
+
     let mut screen = GameScreen::Logo;
 
     rl.set_target_fps(60);
@@ -147,39 +208,43 @@ fn main() {
                 // WARNING: only updates things here!
                 // unless it's not gameplay related!
 
-                if d.is_key_down(KeyboardKey::KEY_LEFT) && d.is_key_down(KeyboardKey::KEY_DOWN) {
-                    println!("Diagonal left down");
-                }
-
-                if d.is_key_down(KeyboardKey::KEY_RIGHT) && d.is_key_down(KeyboardKey::KEY_DOWN) {
-                    println!("Diagonal right down");
-                }
-
-                if d.is_key_down(KeyboardKey::KEY_RIGHT) && d.is_key_down(KeyboardKey::KEY_UP) {
-                    println!("Diagonal right up");
-                }
-
-                if d.is_key_down(KeyboardKey::KEY_LEFT) && d.is_key_down(KeyboardKey::KEY_UP) {
-                    println!("Diagonal left up");
-                }
-
-                if d.is_key_down(KeyboardKey::KEY_UP) {
-                    creature_1_rect.y -= 32.0 * dt * speed;
-                }
-
-                if d.is_key_down(KeyboardKey::KEY_DOWN) {
-                    creature_1_rect.y += 32.0 * dt * speed;
-                }
-
-                if d.is_key_down(KeyboardKey::KEY_LEFT) {
-                    creature_1_rect.x -= 32.0 * dt * speed;
-                }
-
-                if d.is_key_down(KeyboardKey::KEY_RIGHT) {
-                    creature_1_rect.x += 32.0 * dt * speed;
-                }
+                //if d.is_key_down(KeyboardKey::KEY_LEFT) && d.is_key_down(KeyboardKey::KEY_DOWN) {
+                //    println!("Diagonal left down");
+                //}
+                //
+                //if d.is_key_down(KeyboardKey::KEY_RIGHT) && d.is_key_down(KeyboardKey::KEY_DOWN) {
+                //    println!("Diagonal right down");
+                //}
+                //
+                //if d.is_key_down(KeyboardKey::KEY_RIGHT) && d.is_key_down(KeyboardKey::KEY_UP) {
+                //    println!("Diagonal right up");
+                //}
+                //
+                //if d.is_key_down(KeyboardKey::KEY_LEFT) && d.is_key_down(KeyboardKey::KEY_UP) {
+                //    println!("Diagonal left up");
+                //}
+                //
+                //if d.is_key_down(KeyboardKey::KEY_UP) {
+                //    creature_1_rect.y -= 32.0 * dt * speed;
+                //}
+                //
+                //if d.is_key_down(KeyboardKey::KEY_DOWN) {
+                //    creature_1_rect.y += 32.0 * dt * speed;
+                //}
+                //
+                //if d.is_key_down(KeyboardKey::KEY_LEFT) {
+                //    creature_1_rect.x -= 32.0 * dt * speed;
+                //}
+                //
+                //if d.is_key_down(KeyboardKey::KEY_RIGHT) {
+                //    creature_1_rect.x += 32.0 * dt * speed;
+                //}
 
                 let (tile_x, tile_y) = screen_to_iso_tile(mouse_pos.x, mouse_pos.y);
+                let (another_x, another_y) = iso_to_screen(tile_x, tile_y);
+
+                print!("x: {}, y: {} \n", another_x, another_y);
+                print!("mouse x: {}, mouse y: {} \n", mouse_pos.x, mouse_pos.y);
 
                 // loop over X axis
                 for x in 0..30 {
@@ -236,21 +301,7 @@ fn main() {
                     }
                 }
 
-                // draw creature
-                d.draw_texture_pro(
-                    &creature_1,
-                    Rectangle {
-                        x: 36.0,
-                        y: 24.0,
-                        width: 32.0,
-                        height: 32.0,
-                    },
-                    Rectangle { ..creature_1_rect },
-                    Vector2 { x: 0.0, y: 0.0 },
-                    0.0,
-                    Color::WHITE,
-                );
-
+                player.draw(&mut d);
                 pause_btn.draw(&mut d, &font);
                 pause_btn.handle_click(&mut d, || {
                     println!("Paused!");
@@ -307,6 +358,22 @@ struct Button<'a> {
     visible: bool,
 }
 
+fn iso_to_screen(grid_x: i32, grid_y: i32) -> (f32, f32) {
+    let w2 = TILE_WIDTH * 0.5;
+    let h2 = TILE_HEIGHT * 0.5;
+
+    // Project grid coords onto screen
+    // Note: X-axis moves down-right, Y-axis moves down-left
+    let sx = (grid_x as f32 - grid_y as f32) * w2;
+    let sy = (grid_x as f32 + grid_y as f32) * h2;
+
+    // Apply the same centering used in your draw() code
+    let screen_x = sx - w2 + (SCREEN_WIDTH as f32 * 0.5);
+    let screen_y = sy;
+
+    (screen_x, screen_y)
+}
+
 fn screen_to_iso_tile(mx: f32, my: f32) -> (i32, i32) {
     let tile_w = TILE_WIDTH;
     let tile_h = TILE_HEIGHT;
@@ -323,12 +390,6 @@ fn screen_to_iso_tile(mx: f32, my: f32) -> (i32, i32) {
     let y = fy.round() as i32;
 
     (x, y)
-    //// Optional bounds check if you know your map dimensions
-    //if x >= 0 && y >= 0 && x < SCREEN_WIDTH && y < SCREEN_HEIGHT {
-    //    Some((x, y))
-    //} else {
-    //    None
-    //}
 }
 
 impl<'a> Button<'a> {
